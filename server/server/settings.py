@@ -204,19 +204,22 @@ OUT_OF_BOUNDS_DEBOUNCE_SEC = 10.0
 # The max distance for a waypoint to be considered satisfied.
 SATISFIED_WAYPOINT_DIST_MAX_FT = 100
 
+# The time between interop telemetry posts that's a prereq for other tasks.
+INTEROP_TELEM_THRESHOLD_TIME_SEC = 1.0
+
 # Ratio of object points to lose for every extra unmatched object submitted.
 EXTRA_OBJECT_PENALTY_RATIO = 0.05
-# The weight of classification accuracy when calculating a target match score.
+# The weight of classification accuracy when calculating a odlc match score.
 CHARACTERISTICS_WEIGHT = 0.2
 # The lowest allowed location accuracy (in feet)
 TARGET_LOCATION_THRESHOLD = 150
-# The weight of geolocation accuracy when calculating a target match score.
+# The weight of geolocation accuracy when calculating a odlc match score.
 GEOLOCATION_WEIGHT = 0.2
-# The weight of actionable intelligence when calculating a target match score.
+# The weight of actionable intelligence when calculating a odlc match score.
 ACTIONABLE_WEIGHT = 0.1
-# The weight of autonomy when calculating a target match score.
+# The weight of autonomy when calculating a odlc match score.
 AUTONOMY_WEIGHT = 0.2
-# The weight of submission over interop when calculating a target match score.
+# The weight of submission over interop when calculating a odlc match score.
 INTEROPERABILITY_WEIGHT = 0.3
 
 # Weight of timeline points for mission time.
@@ -235,6 +238,41 @@ MISSION_TIME_TOTAL_POINTS = MISSION_MAX_TIME_SEC * max(
 # Mission time points lost due for every second over time.
 MISSION_TIME_PENALTY_FROM_SEC = MISSION_TIME_WEIGHT * 0.01
 
-# Total mission time 
-# Weight for 
-# Max weighted time.
+# Ratio of points lost per takeover.
+AUTONOMOUS_FLIGHT_TAKEOVER = 0.10
+# Ratio of points lost per out of bounds.
+BOUND_PENALTY = 0.1
+SAFETY_BOUND_PENALTY = 0.1
+# Ratio of points lost for TFOA and crash.
+TFOA_PENALTY = 0.25
+CRASH_PENALTY = 0.35
+# Weight of flight points to all autonomous flight.
+AUTONOMOUS_FLIGHT_FLIGHT_WEIGHT = 0.4
+# Weight of capture points to all autonomous flight.
+WAYPOINT_CAPTURE_WEIGHT = 0.1
+# Weight of accuracy points to all autonomous flight.
+WAYPOINT_ACCURACY_WEIGHT = 0.5
+
+# Weight of stationary obstacle avoidance.
+STATIONARY_OBST_WEIGHT = 0.5
+# Weight of moving obstacle avoidance.
+MOVING_OBST_WEIGHT = 0.5
+
+# Air delivery accuracy threshold.
+AIR_DELIVERY_THRESHOLD_FT = 150.0
+
+# Scoring weights.
+TIMELINE_WEIGHT = 0.1
+AUTONOMOUS_WEIGHT = 0.3
+OBSTACLE_WEIGHT = 0.2
+OBJECT_WEIGHT = 0.2
+AIR_DELIVERY_WEIGHT = 0.1
+OPERATIONAL_WEIGHT = 0.1
+
+# Max aircraft airspeed in ft/s. Rules specify 70 KIAS.
+MAX_AIRSPEED_FT_PER_SEC = 118.147
+# Maximum interval between telemetry logs allowed for interpolation.
+MAX_TELMETRY_INTERPOLATE_INTERVAL_SEC = 1.5
+# We should sample moving obstacle position at this time interval when
+# interpolating.
+MOVING_OBSTACLE_INTERPOLATION_INTERVAL = 0.1

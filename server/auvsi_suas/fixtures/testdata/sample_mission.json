@@ -479,10 +479,12 @@
         "post_process_time": "00:00:02",
         "used_timeout": false,
         "safety_pilot_takeovers": 0,
-        "manual_flight_time": "00:00:00",
+        "min_auto_flight_time": true,
         "waypoints_captured": 2,
         "out_of_bounds": 2,
         "unsafe_out_of_bounds": 1,
+        "things_fell_off_uas": false,
+        "crashed": false,
         "air_delivery_accuracy_ft": null,
         "operational_excellence_percent": 80
     },
@@ -497,10 +499,12 @@
         "post_process_time": "00:00:01",
         "used_timeout": true,
         "safety_pilot_takeovers": 1,
-        "manual_flight_time": "00:00:02",
+        "min_auto_flight_time": true,
         "waypoints_captured": 1,
         "out_of_bounds": 0,
         "unsafe_out_of_bounds": 0,
+        "things_fell_off_uas": true,
+        "crashed": true,
         "air_delivery_accuracy_ft": 10,
         "operational_excellence_percent": 80
     },
@@ -516,7 +520,7 @@
         "fly_zones": [
             22
         ],
-        "off_axis_target_pos": 324,
+        "off_axis_odlc_pos": 324,
         "moving_obstacles": [
             25,
             26
@@ -530,7 +534,7 @@
         "search_grid_points": [
             150
         ],
-        "targets": [
+        "odlcs": [
             1,
             2,
             3
@@ -680,9 +684,9 @@
         "orientation": 5,
         "alphanumeric_color": 2,
         "thumbnail_approved": null,
-        "description": "Test target 1",
+        "description": "Test odlc 1",
         "creation_time": "2016-05-12T04:44:40.701Z",
-        "target_type": 1,
+        "odlc_type": 1,
         "alphanumeric": "ABC",
         "shape": 5,
         "location": 337,
@@ -692,7 +696,7 @@
         "thumbnail": "",
         "user": 55
     },
-    "model": "auvsi_suas.target",
+    "model": "auvsi_suas.odlc",
     "pk": 1
 },
 {
@@ -700,9 +704,9 @@
         "orientation": 5,
         "alphanumeric_color": 2,
         "thumbnail_approved": null,
-        "description": "Test target 2",
+        "description": "Test odlc 2",
         "creation_time": "2016-05-12T04:46:00.060Z",
-        "target_type": 1,
+        "odlc_type": 1,
         "alphanumeric": "DEF",
         "shape": 4,
         "location": 338,
@@ -712,7 +716,7 @@
         "thumbnail": "",
         "user": 55
     },
-    "model": "auvsi_suas.target",
+    "model": "auvsi_suas.odlc",
     "pk": 2
 },
 {
@@ -720,9 +724,9 @@
         "orientation": null,
         "alphanumeric_color": null,
         "thumbnail_approved": null,
-        "description": "Test target 3",
+        "description": "Test odlc 3",
         "creation_time": "2016-05-12T04:46:59.370Z",
-        "target_type": 3,
+        "odlc_type": 3,
         "alphanumeric": "",
         "shape": null,
         "location": 339,
@@ -732,7 +736,7 @@
         "thumbnail": "",
         "user": 55
     },
-    "model": "auvsi_suas.target",
+    "model": "auvsi_suas.odlc",
     "pk": 3
 },
 {
@@ -742,7 +746,7 @@
         "thumbnail_approved": true,
         "description": "",
         "creation_time": "1970-01-01T00:00:00.100Z",
-        "target_type": 1,
+        "odlc_type": 1,
         "alphanumeric": "ABC",
         "shape": 5,
         "location": 337,
@@ -752,7 +756,7 @@
         "thumbnail": "",
         "user": 53
     },
-    "model": "auvsi_suas.target",
+    "model": "auvsi_suas.odlc",
     "pk": 4
 },
 {
@@ -762,7 +766,7 @@
         "thumbnail_approved": true,
         "description": "",
         "creation_time": "1970-01-01T00:00:00.100Z",
-        "target_type": 1,
+        "odlc_type": 1,
         "alphanumeric": "ABC",
         "shape": 1,
         "location": 337,
@@ -772,7 +776,7 @@
         "thumbnail": "",
         "user": 53
     },
-    "model": "auvsi_suas.target",
+    "model": "auvsi_suas.odlc",
     "pk": 5
 },
 {
@@ -782,7 +786,7 @@
         "thumbnail_approved": true,
         "description": "Incorrect description",
         "creation_time": "1970-01-01T00:00:00.100Z",
-        "target_type": 3,
+        "odlc_type": 3,
         "alphanumeric": "",
         "shape": null,
         "location": 337,
@@ -792,7 +796,7 @@
         "thumbnail": "",
         "user": 53
     },
-    "model": "auvsi_suas.target",
+    "model": "auvsi_suas.odlc",
     "pk": 6
 },
 {

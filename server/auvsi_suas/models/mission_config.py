@@ -16,8 +16,8 @@ from mission_clock_event import MissionClockEvent
 from moving_obstacle import MovingObstacle
 from stationary_obstacle import StationaryObstacle
 from takeoff_or_landing_event import TakeoffOrLandingEvent
-from target import Target
-from target import TargetEvaluator
+from odlc import Odlc
+from odlc import OdlcEvaluator
 from time_period import TimePeriod
 from uas_telemetry import UasTelemetry
 from waypoint import Waypoint
@@ -37,49 +37,49 @@ class MissionConfig(models.Model):
         fly_zones: Valid areas for the UAS to fly.
         mission_waypoints: The waypoints that define the mission waypoint path
         search_grid_points: The polygon that defines the search grid.
-        targets: The judge created targets.
-        emergent_last_known_pos: The last known position of the emergent target.
-        off_axis_target_pos: Off-axis target position.
+        odlcs: The judge created objects for detection.
+        emergent_last_known_pos: The last known position of the emergent object.
+        off_axis_odlc_pos: Off-axis object position.
         air_drop_pos: The air drop position.
         stationary_obstacles: The stationary obstacles.
         moving_obstacles: The moving obstacles.
     """
     is_active = models.BooleanField(default=False)
-    home_pos = models.ForeignKey(GpsPosition,
-                                 related_name="missionconfig_home_pos")
+    home_pos = models.ForeignKey(
+        GpsPosition, related_name="missionconfig_home_pos")
     fly_zones = models.ManyToManyField(FlyZone)
     mission_waypoints = models.ManyToManyField(
-        Waypoint,
-        related_name='missionconfig_mission_waypoints')
+        Waypoint, related_name='missionconfig_mission_waypoints')
     search_grid_points = models.ManyToManyField(
-        Waypoint,
-        related_name='missionconfig_search_grid_points')
-    targets = models.ManyToManyField(Target,
-                                     related_name='missionconfig_targets')
+        Waypoint, related_name='missionconfig_search_grid_points')
+    odlcs = models.ManyToManyField(Odlc, related_name='missionconfig_odlc')
     emergent_last_known_pos = models.ForeignKey(
-        GpsPosition,
-        related_name='missionconfig_emergent_last_known_pos')
-    off_axis_target_pos = models.ForeignKey(
-        GpsPosition,
-        related_name='missionconfig_off_axis_target_pos')
-    air_drop_pos = models.ForeignKey(GpsPosition,
-                                     related_name='missionconfig_air_drop_pos')
+        GpsPosition, related_name='missionconfig_emergent_last_known_pos')
+    off_axis_odlc_pos = models.ForeignKey(
+        GpsPosition, related_name='missionconfig_off_axis_odlc_pos')
+    air_drop_pos = models.ForeignKey(
+        GpsPosition, related_name='missionconfig_air_drop_pos')
     stationary_obstacles = models.ManyToManyField(StationaryObstacle)
     moving_obstacles = models.ManyToManyField(MovingObstacle)
 
     def __unicode__(self):
         """Descriptive text for use in displays."""
-        mission_waypoints = ['%s' % wpt.__unicode__()
-                             for wpt in self.mission_waypoints.all()]
+        mission_waypoints = [
+            '%s' % wpt.__unicode__() for wpt in self.mission_waypoints.all()
+        ]
 
-        search_grid = ['%s' % wpt.__unicode__()
-                       for wpt in self.search_grid_points.all()]
+        search_grid = [
+            '%s' % wpt.__unicode__() for wpt in self.search_grid_points.all()
+        ]
 
-        stationary_obstacles = ['%s' % obst.__unicode__()
-                                for obst in self.stationary_obstacles.all()]
+        stationary_obstacles = [
+            '%s' % obst.__unicode__()
+            for obst in self.stationary_obstacles.all()
+        ]
 
-        moving_obstacles = ['%s' % obst.__unicode__()
-                            for obst in self.moving_obstacles.all()]
+        moving_obstacles = [
+            '%s' % obst.__unicode__() for obst in self.moving_obstacles.all()
+        ]
 
         return unicode(
             'MissionConfig (pk:%s, is_active: %s, home_pos:%s, '
@@ -89,7 +89,7 @@ class MissionConfig(models.Model):
             (str(self.pk), str(self.is_active), self.home_pos.__unicode__(),
              mission_waypoints, search_grid,
              self.emergent_last_known_pos.__unicode__(),
-             self.off_axis_target_pos.__unicode__(),
+             self.off_axis_odlc_pos.__unicode__(),
              self.air_drop_pos.__unicode__(), stationary_obstacles,
              moving_obstacles))
 
@@ -105,9 +105,9 @@ class MissionConfig(models.Model):
             "fly_zones": [],  # Filled in below
             "mission_waypoints": [],  # Filled in below
             "search_grid_points": [],  # Filled in below
-            'off_axis_target_pos': {
-                'latitude': self.off_axis_target_pos.latitude,
-                'longitude': self.off_axis_target_pos.longitude,
+            'off_axis_odlc_pos': {
+                'latitude': self.off_axis_odlc_pos.latitude,
+                'longitude': self.off_axis_odlc_pos.longitude,
             },
             "emergent_last_known_pos": {
                 "latitude": self.emergent_last_known_pos.latitude,
@@ -119,13 +119,11 @@ class MissionConfig(models.Model):
             },
         }
         for zone in self.fly_zones.all():
-            pts = [
-                {
-                    "latitude": bpt.position.gps_position.latitude,
-                    "longitude": bpt.position.gps_position.longitude,
-                    "order": bpt.order
-                } for bpt in zone.boundary_pts.order_by('order')
-            ]
+            pts = [{
+                "latitude": bpt.position.gps_position.latitude,
+                "longitude": bpt.position.gps_position.longitude,
+                "order": bpt.order
+            } for bpt in zone.boundary_pts.order_by('order')]
             ret['fly_zones'].append({
                 "boundary_pts": pts,
                 "altitude_msl_min": zone.altitude_msl_min,
@@ -133,17 +131,25 @@ class MissionConfig(models.Model):
             })
         for waypoint in self.mission_waypoints.all():
             ret['mission_waypoints'].append({
-                'order': waypoint.order,
-                'latitude': waypoint.position.gps_position.latitude,
-                'longitude': waypoint.position.gps_position.longitude,
-                'altitude_msl': waypoint.position.altitude_msl,
+                'order':
+                waypoint.order,
+                'latitude':
+                waypoint.position.gps_position.latitude,
+                'longitude':
+                waypoint.position.gps_position.longitude,
+                'altitude_msl':
+                waypoint.position.altitude_msl,
             })
         for point in self.search_grid_points.all():
             ret['search_grid_points'].append({
-                'order': point.order,
-                'latitude': point.position.gps_position.latitude,
-                'longitude': point.position.gps_position.longitude,
-                'altitude_msl': point.position.altitude_msl,
+                'order':
+                point.order,
+                'latitude':
+                point.position.gps_position.latitude,
+                'longitude':
+                point.position.gps_position.longitude,
+                'altitude_msl':
+                point.position.altitude_msl,
             })
         if not is_superuser:
             return ret
@@ -154,10 +160,14 @@ class MissionConfig(models.Model):
         })
         for obst in self.stationary_obstacles.all():
             ret['stationary_obstacles'].append({
-                'latitude': obst.gps_position.latitude,
-                'longitude': obst.gps_position.longitude,
-                'cylinder_radius': obst.cylinder_radius,
-                'cylinder_height': obst.cylinder_height,
+                'latitude':
+                obst.gps_position.latitude,
+                'longitude':
+                obst.gps_position.longitude,
+                'cylinder_radius':
+                obst.cylinder_radius,
+                'cylinder_height':
+                obst.cylinder_height,
             })
         for obst in self.moving_obstacles.all():
             ret['moving_obstacles'].append({
@@ -196,7 +206,7 @@ class MissionConfig(models.Model):
         locations = {
             'Home Position': self.home_pos,
             'Emergent LKP': self.emergent_last_known_pos,
-            'Off Axis': self.off_axis_target_pos,
+            'Off Axis': self.off_axis_odlc_pos,
             'Air Drop': self.air_drop_pos,
         }
         for key, point in locations.iteritems():
@@ -216,8 +226,8 @@ class MissionConfig(models.Model):
             waypoints.append(coord)
 
             # Add waypoint marker
-            wp = waypoints_folder.newpoint(name=str(waypoint_num),
-                                           coords=[coord])
+            wp = waypoints_folder.newpoint(
+                name=str(waypoint_num), coords=[coord])
             wp.description = str(waypoint)
             wp.altitudemode = AltitudeMode.absolute
             wp.extrude = 1
@@ -229,8 +239,8 @@ class MissionConfig(models.Model):
         linestring.altitudemode = AltitudeMode.absolute
         linestring.extrude = 1
         linestring.style.linestyle.color = Color.black
-        linestring.style.polystyle.color = Color.changealphaint(100,
-                                                                Color.green)
+        linestring.style.polystyle.color = Color.changealphaint(
+            100, Color.green)
 
         # Search Area
         search_area_folder = kml_folder.newfolder(name='Search Area')
@@ -243,8 +253,8 @@ class MissionConfig(models.Model):
             search_area.append(coord)
 
             # Add boundary marker
-            wp = search_area_folder.newpoint(name=str(search_area_num),
-                                             coords=[coord])
+            wp = search_area_folder.newpoint(
+                name=str(search_area_num), coords=[coord])
             wp.description = str(point)
             wp.visibility = False
             search_area_num += 1

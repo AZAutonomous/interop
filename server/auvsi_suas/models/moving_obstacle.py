@@ -3,6 +3,7 @@
 import numpy as np
 from datetime import timedelta
 from waypoint import Waypoint
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from scipy.interpolate import splrep, splev
@@ -28,13 +29,14 @@ class MovingObstacle(models.Model):
 
     def __unicode__(self):
         """Descriptive text for use in displays."""
-        waypoints_strs = ["%s" % wpt.__unicode__()
-                          for wpt in self.waypoints.all()]
+        waypoints_strs = [
+            "%s" % wpt.__unicode__() for wpt in self.waypoints.all()
+        ]
         waypoints_str = ", ".join(waypoints_strs)
         return unicode("MovingObstacle (pk:%s, speed:%s, radius:%s, "
-                       "waypoints:[%s])" % (str(self.pk), str(self.speed_avg),
-                                            str(self.sphere_radius),
-                                            waypoints_str))
+                       "waypoints:[%s])" %
+                       (str(self.pk), str(self.speed_avg),
+                        str(self.sphere_radius), waypoints_str))
 
     def get_waypoint_travel_time(self, waypoints, id_tm1, id_t):
         """Gets the travel time to the current waypoint from a previous.
@@ -82,8 +84,8 @@ class MovingObstacle(models.Model):
             # Current intra waypoint travel time
             id_tm1 = (waypoint_id - 1) % num_waypoints
             id_t = waypoint_id % num_waypoints
-            cur_travel_time = self.get_waypoint_travel_time(waypoints, id_tm1,
-                                                            id_t)
+            cur_travel_time = self.get_waypoint_travel_time(
+                waypoints, id_tm1, id_t)
             travel_times[waypoint_id] = cur_travel_time
 
         return travel_times
@@ -163,8 +165,7 @@ class MovingObstacle(models.Model):
             # Load waypoints for obstacle, filter for consecutive duplicates
             all_wpts = self.waypoints.order_by('order')
             waypoints = [
-                all_wpts[i]
-                for i in range(len(all_wpts))
+                all_wpts[i] for i in range(len(all_wpts))
                 if i == 0 or all_wpts[i].distance_to(all_wpts[i - 1]) != 0
             ]
             self.preprocessed_waypoints = waypoints
@@ -188,13 +189,14 @@ class MovingObstacle(models.Model):
         (total_travel_time, spline_reps) = spline_curve
 
         # Sample spline at current time
-        epoch_time = timezone.now().replace(year=1970,
-                                            month=1,
-                                            day=1,
-                                            hour=0,
-                                            minute=0,
-                                            second=0,
-                                            microsecond=0)
+        epoch_time = timezone.now().replace(
+            year=1970,
+            month=1,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0)
         cur_time_sec = (cur_time - epoch_time).total_seconds()
         cur_path_time = np.mod(cur_time_sec, total_travel_time)
         latitude = float(splev(cur_path_time, spline_reps[0]))
@@ -219,6 +221,43 @@ class MovingObstacle(models.Model):
             aerial_pos.gps_position.longitude, aerial_pos.altitude_msl)
         return dist_to_center <= self.sphere_radius
 
+    def determine_interpolated_collision(self, start_log, end_log, utm):
+        """Determines whether the UAS collided with the obstacle by
+        interpolating between start and end telemetry.
+
+        Args:
+            start_log: A UAS telemetry log.
+            end_log: A UAS telemetry log.
+            utm: The UTM Proj projection to project into.
+        Returns:
+            True if the UAS collided with the obstacle, False otherwise.
+        """
+        start = (start_log.uas_position.gps_position.latitude,
+                 start_log.uas_position.gps_position.longitude,
+                 start_log.uas_position.altitude_msl)
+        end = (end_log.uas_position.gps_position.latitude,
+               end_log.uas_position.gps_position.longitude,
+               end_log.uas_position.altitude_msl)
+        epoch_time = timezone.now().replace(
+            year=1970,
+            month=1,
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0)
+        start_seconds = (start_log.timestamp - epoch_time).total_seconds()
+        end_seconds = (end_log.timestamp - epoch_time).total_seconds()
+        for s in np.arange(start_seconds, end_seconds,
+                           settings.MOVING_OBSTACLE_INTERPOLATION_INTERVAL):
+            t = epoch_time + timedelta(seconds=s)
+            d = distance.distance_to_line(start, end, self.get_position(t),
+                                          utm)
+            if d <= self.sphere_radius:
+                return True
+
+        return False
+
     def evaluate_collision_with_uas(self, uas_telemetry_logs):
         """Evaluates whether the Uas logs indicate a collision.
 
@@ -229,10 +268,18 @@ class MovingObstacle(models.Model):
             Whether a UAS telemetry log reported indicates a collision with the
             obstacle.
         """
-        for cur_log in uas_telemetry_logs:
+        obst_pos = self.get_position()
+        zone, north = distance.utm_zone(obst_pos[0], obst_pos[1])
+        utm = distance.proj_utm(zone, north)
+        for i, cur_log in enumerate(uas_telemetry_logs):
             (lat, lon, alt) = self.get_position(cur_log.timestamp)
             if self.contains_pos(lat, lon, alt, cur_log.uas_position):
                 return True
+            if i > 0:
+                if self.determine_interpolated_collision(
+                        uas_telemetry_logs[i - 1], cur_log, utm):
+                    return True
+
         return False
 
     def json(self, time=None):
@@ -290,9 +337,10 @@ class MovingObstacle(models.Model):
 
         # Create a schema for extended data: proximity
         schema = kml_doc.newschema()
-        schema.newgxsimplearrayfield(name='proximity',
-                                     type=Types.float,
-                                     displayname='UAS Proximity [ft]')
+        schema.newgxsimplearrayfield(
+            name='proximity',
+            type=Types.float,
+            displayname='UAS Proximity [ft]')
         trk.extendeddata.schemadata.schemaurl = schema.id
 
         # Append flight data
@@ -365,5 +413,5 @@ class MovingObstacle(models.Model):
             linestring.altitudemode = AltitudeMode.absolute
             linestring.extrude = 1
             linestring.style.linestyle.color = Color.red
-            linestring.style.polystyle.color = Color.changealphaint(100,
-                                                                    Color.red)
+            linestring.style.polystyle.color = Color.changealphaint(
+                100, Color.red)

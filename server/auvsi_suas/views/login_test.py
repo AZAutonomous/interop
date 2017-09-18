@@ -41,9 +41,10 @@ class TestLoginUserView(TestCase):
 
     def test_invalid_credentials(self):
         """Tests invalid credentials for login."""
-        response = self.client.post(login_url, {'username': 'a',
-                                                'password': 'b'})
-        self.assertEqual(400, response.status_code)
+        response = self.client.post(login_url,
+                                    {'username': 'a',
+                                     'password': 'b'})
+        self.assertEqual(401, response.status_code)
 
     def test_correct_credentials(self):
         """Tests correct credentials for login."""
