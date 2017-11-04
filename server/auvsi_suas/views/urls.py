@@ -9,13 +9,12 @@ from auvsi_suas.views.auvsi_admin.evaluate_teams import EvaluateTeams
 from auvsi_suas.views.auvsi_admin.export_kml import ExportKml
 from auvsi_suas.views.auvsi_admin.index import Index
 from auvsi_suas.views.auvsi_admin.live_kml import LiveKml, LiveKmlUpdate
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.conf import settings
 from django.conf.urls.static import static
 
 # yapf: disable
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     # Team interoperability
     url(r'^api/login$', Login.as_view(), name='login'),
     url(r'^api/obstacles$', Obstacles.as_view(), name='obstacles'),
@@ -43,5 +42,5 @@ urlpatterns = patterns(
     url(r'^auvsi_admin/live\.kml$', LiveKml.as_view(), name='live_kml'),
     url(r'^auvsi_admin/update\.kml$', LiveKmlUpdate.as_view(),
         name='update_kml'),
-) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # yapf: enable
